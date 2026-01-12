@@ -1,16 +1,11 @@
 use rust_decimal::Decimal;
-use serde::{Serialize, Serializer};
+use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct Account {
-    #[serde(rename = "client")]
     pub client_id: u16,
-    #[serde(serialize_with = "serialize_decimal")]
     pub available: Decimal,
-    #[serde(serialize_with = "serialize_decimal")]
     pub held: Decimal,
-    #[serde(serialize_with = "serialize_decimal")]
-    pub total: Decimal,
     pub locked: bool,
 }
 
@@ -20,13 +15,12 @@ impl Account {
             client_id,
             available: Decimal::ZERO,
             held: Decimal::ZERO,
-            total: Decimal::ZERO,
             locked: false,
         }
     }
 
-    pub fn update_total(&mut self) {
-        self.total = self.available + self.held;
+    pub fn total(&self) -> Decimal {
+        self.available + self.held
     }
 
     pub fn has_sufficient_funds(&self, amount: Decimal) -> bool {
@@ -34,12 +28,28 @@ impl Account {
     }
 }
 
-fn serialize_decimal<S>(value: &Decimal, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    // Round to max 4 decimal places,
-    // then strip trailing zeros for cleaner output
-    let normalized = value.round_dp(4).normalize();
-    serializer.serialize_str(&normalized.to_string())
+/// Separates domain model from output format
+#[derive(Serialize)]
+pub struct AccountOutput {
+    client: u16,
+    available: String,
+    held: String,
+    total: String,
+    locked: bool,
+}
+
+impl From<&Account> for AccountOutput {
+    fn from(account: &Account) -> Self {
+        Self {
+            client: account.client_id,
+            available: format_decimal(account.available),
+            held: format_decimal(account.held),
+            total: format_decimal(account.total()),
+            locked: account.locked,
+        }
+    }
+}
+
+fn format_decimal(value: Decimal) -> String {
+    value.round_dp(4).normalize().to_string()
 }

@@ -29,8 +29,8 @@ make help
                             │
                     ┌───────▼───────┐
                     │  Processor    │
-                    │  - accounts   │ HashMap<u16, Account>
-                    │  - deposits   │ HashMap<u32, DepositRecord>
+                    │  - accounts   │ BTreeMap<u16, Account>
+                    │  - deposits   │ BTreeMap<u32, DepositRecord>
                     └───────────────┘
 ```
 

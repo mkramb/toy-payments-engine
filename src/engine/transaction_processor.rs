@@ -2,11 +2,18 @@ use crate::engine::account::Account;
 use crate::engine::transaction::{DepositRecord, Transaction, TransactionType};
 use crate::Result;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
+/// Processes financial transactions maintaining account state.
+///
+/// # Thread Safety
+///
+/// This processor requires exclusive (`&mut`) access for all operations.
+/// For concurrent environments (e.g., HTTP streaming), wrap in `Arc<Mutex<_>>`
+/// or use an actor pattern where a single task owns the processor.
 pub struct TransactionProcessor {
-    accounts: HashMap<u16, Account>,
-    deposits: HashMap<u32, DepositRecord>,
+    accounts: BTreeMap<u16, Account>,
+    deposits: BTreeMap<u32, DepositRecord>,
 }
 
 #[path = "transaction_processor_deposits.rs"]
@@ -18,8 +25,8 @@ mod transaction_processor_disputes;
 impl TransactionProcessor {
     pub fn new() -> Self {
         Self {
-            accounts: HashMap::default(),
-            deposits: HashMap::default(),
+            accounts: BTreeMap::new(),
+            deposits: BTreeMap::new(),
         }
     }
 
@@ -33,7 +40,7 @@ impl TransactionProcessor {
         }
     }
 
-    pub fn accounts(&self) -> &HashMap<u16, Account> {
+    pub fn accounts(&self) -> &BTreeMap<u16, Account> {
         &self.accounts
     }
 }
